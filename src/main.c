@@ -24,7 +24,7 @@ static const struct device *get_bme280_device(void)
 		return NULL;
 	}
 
-	if (!device_is_ready(dev)) {
+	if (!device_is_ready(dev)) { 
 		printk("\nError: Device \"%s\" is not ready; "
 		       "check the driver initialization logs for errors.\n",
 		       dev->name);
