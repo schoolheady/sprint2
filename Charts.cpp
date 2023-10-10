@@ -6,7 +6,7 @@
 
 
 // Deze functie doet niks ?????
-std::unique_ptr<QChart> createChart(QLineSeries* series, const QString& title)
+std::unique_ptr<QChart> ChartsManager::createChart(QLineSeries* series, const QString& title)
 {
     auto chart = std::make_unique<QChart>();
     chart->legend()->hide();
@@ -22,3 +22,6 @@ std::unique_ptr<QChartView> createChartView(QChart* chart)
     chartView->setRenderHint(QPainter::Antialiasing);
     return chartView;
 }
+
+
+

@@ -56,16 +56,41 @@ void AddDataToSeries(){
     }
 }
 
+void createAndSetAxes(QChart* chart) {
+    // Create axes
+    QValueAxis *axisX = new QValueAxis;
+    QValueAxis *axisY1 = new QValueAxis;
+    QValueAxis *axisY2 = new QValueAxis;
+    QValueAxis *axisY3 = new QValueAxis;
+
+    // Set the ranges of the axes
+    axisX->setRange(*std::min_element(timeArray.begin(), timeArray.end()), *std::max_element(timeArray.begin(), timeArray.end()));
+    axisY1->setRange(0, *std::max_element(Array.begin(), Array.end()));
+    axisY2->setRange(0, *std::max_element(array2.begin(), array2.end()));
+    axisY3->setRange(0, *std::max_element(array3.begin(), array3.end()));
+
+    // Add the axes to the chart
+    chart->setAxisX(axisX, chart->series().at(0)); // Assuming series1 is the first series
+    chart->setAxisY(axisY1, chart->series().at(0)); // Assuming series1 is the first series
+    chart->setAxisY(axisY2, chart->series().at(1)); // Assuming series2 is the second series
+    chart->setAxisY(axisY3, chart->series().at(2)); // Assuming series3 is the third series
+
+    // Set the title of the x-axis
+    axisX->setTitleText("Tijd in uren");
+
+    // Set the title of the y-axes
+    axisY1->setTitleText("Temperatuur in °C");
+    axisY2->setTitleText("Vochtigheid in %");
+    axisY3->setTitleText("Druk in Hectopascal");
+}
+
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-
     databaseConnection();
-
     AddDataToSeries();
-
 
     // Create a QChart object for the data
     auto chart = std::make_unique<QChart>();
@@ -75,38 +100,13 @@ int main(int argc, char *argv[])
     chart->addSeries(series2.get());
     chart->addSeries(series3.get());
 
-    // Create axes
-    QValueAxis *axisX = new QValueAxis;
-    QValueAxis *axisY1 = new QValueAxis;
-    QValueAxis *axisY2 = new QValueAxis;
-    QValueAxis *axisY3 = new QValueAxis;
-
-    // Set the ranges of the axes
-    axisX->setRange(*std::min_element(timeArray.begin(), timeArray.end()), *std::max_element(timeArray.begin(), timeArray.end()));
-    //axisX->setRange(0, 23);
-    axisY1->setRange(0, *std::max_element(Array.begin(), Array.end()));
-    axisY2->setRange(0, *std::max_element(array2.begin(), array2.end()));
-    axisY3->setRange(0, *std::max_element(array3.begin(), array3.end()));
-
-    // Add the axes to the chart
-    chart->setAxisX(axisX, series1.get());
-    chart->setAxisY(axisY1, series1.get());
-    chart->setAxisY(axisY2, series2.get());
-    chart->setAxisY(axisY3, series3.get());
-
+    // Call the method to create and set the axes
+    createAndSetAxes(chart.get());
 
     // Set the titles of the series
     series1->setName("Temp");
     series2->setName("Druk");
     series3->setName("Vocht");
-
-    // Set the title of the x-axis
-    axisX->setTitleText("Tijd in uren");
-
-    // Set the title of the y-axes
-    axisY1->setTitleText("Temperatuur in °C");
-    axisY2->setTitleText("Vochtigheid in %");
-    axisY3->setTitleText("Druk in Hectopascal");
 
     // Create a QChartView object for the chart
     auto chartView = createChartView(chart.get());
