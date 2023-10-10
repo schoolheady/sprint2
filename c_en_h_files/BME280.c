@@ -10,12 +10,6 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/sensor.h>
 #include "BME280.h"
-int t1 = 0;
-int t2 = 0;
-int p1 = 0;
-int p2 = 0;
-int h1 = 0;
-int h2 = 0;
 /*
  * Get a device structure from a devicetree node with compatible
  * "bosch,bme280". (If there are multiple, just pick one.)
@@ -41,7 +35,7 @@ static const struct device *get_bme280_device(void)
 	return dev;
 }
 
-void BME280()
+void BME280(int *t1, int *t2, int *p1, int *p2, int *h1, int *h2)
 {
 	const struct device *dev = get_bme280_device();
 	if (dev == NULL) {
@@ -53,11 +47,11 @@ void BME280()
 	sensor_channel_get(dev, SENSOR_CHAN_AMBIENT_TEMP, &temp);
 	sensor_channel_get(dev, SENSOR_CHAN_PRESS, &press);
 	sensor_channel_get(dev, SENSOR_CHAN_HUMIDITY, &humidity);
-	t1 = temp.val1;
-	t2 = temp.val2;
-	p1 = press.val1;
-	p2 = press.val2;
-	h1 = humidity.val1;
-	h2 = humidity.val2;
+	*t1 = temp.val1;
+	*t2 = temp.val2;
+	*p1 = press.val1;
+	*p2 = press.val2;
+	*h1 = humidity.val1;
+	*h2 = humidity.val2;
 	return 0;
 }
