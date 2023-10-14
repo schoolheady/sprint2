@@ -1,9 +1,3 @@
-/*
- * Copyright (c) 2023 JSC
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
@@ -12,59 +6,67 @@
 #include <zephyr/sys/__assert.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/eeprom.h>
+#include "BME280.h"
 
 #define NODE_EP1 DT_NODELABEL(eeprom1)
 #define EEPROM_SIZE 8192 // Size of EEPROM 24LC64 in bytes
 
-int main(void)
-{
-	const struct device *const dev = DEVICE_DT_GET(NODE_EP1);
-	int ret;
-	uint16_t counter = 0;
-	uint8_t eeprom_data[sizeof(uint16_t)];
+int ret;
+int index = 0;
+const struct device *const dev = DEVICE_DT_GET(NODE_EP1);
 
+void write_eeprom() {
+    for (uint16_t addr = 0; addr < EEPROM_SIZE; addr += sizeof(uint16_t)) {
+        BME280();
 
-	// Write and read EEPROM until it is full.
-	for (uint16_t addr = 0; addr < EEPROM_SIZE ; addr += sizeof(uint16_t)) {
-		printk("Address: %d, Value: %d\n", addr, counter);
+        uint16_t val1 = temp_val;
+        uint16_t val2 = temp_decimal;
+        uint16_t val3 = press_val;
+        uint16_t val4 = press_decimal;
+        uint16_t val5 = hum_val;
+        uint16_t val6 = hum_decimal;
 
-		// write data to eeprom device
-		ret = eeprom_write(dev, addr, &counter, sizeof(counter));
-		if (ret) {
-			printk("Failed to write eeprom at address %d (%d)\n", addr, ret);
-			continue;
-		}
-		else{
-			printk("Succes to write eeprom at address %d (%d)\n", addr, ret);
-			//continue;
-		}
+        uint16_t testarr[6] = { val1, val2, val3, val4, val5, val6 };
 
+        // Calculate index based on address in bytes
+        printk("%d\n", testarr[index]);
 
-        // a delay to ti give time to write data to eeprom device
-		//k_sleep(K_MSEC(10)); 
+        ret = eeprom_write(dev, addr, &testarr[index], sizeof(uint16_t));
+        printk("Address: %d, Value: %d\n", addr, testarr[index]);
 
+        if (ret) {
+            printk("Failed to write eeprom at address %d (%d)\n", addr, ret);
+        } else {
+            printk("Success to write eeprom at address %d (%d)\n", addr, ret);
+        }
 
-		// read data from eeprom device
-		k_sleep(K_MSEC(100));
-		ret = eeprom_read(dev, addr, eeprom_data, sizeof(eeprom_data));
-		if (ret) {
-			printk("Failed to read eeprom at address %d (%d)\n", addr, ret);
-			continue;
-		}
+        index = (index + 1) % 6;
 
-		// check
-		if (counter != (uint16_t)(*eeprom_data)){
-			printk("Failed to read back eeprom at address %d (%d) (%d)\n", addr, counter, (uint16_t)(*eeprom_data));
-		} else {
-			printk("Success reading back eeprom at address %d (%d) (%d)\n", addr, counter, (uint16_t)(*eeprom_data));
-		}
+        k_sleep(K_MSEC(6000));
+    }
+}
 
-		counter++;
-		if (counter == 254)// cannot write more than 254
-		{
-			counter = 1;
-		}
-		
-	}
-	return 0;
+void read_eeprom() {
+    uint16_t read_value;
+
+    printk("Reading from EEPROM:\n");
+
+    for (uint16_t addr = 0; addr < EEPROM_SIZE; addr += sizeof(uint16_t)) {
+        // Read data from EEPROM
+        ret = eeprom_read(dev, addr, (uint8_t*)&read_value, sizeof(uint16_t));
+        if (ret) {
+            printk("Failed to read from EEPROM at address %d (%d)\n", addr, ret);
+            return;
+        }
+
+        printk("Success reading back eeprom at address %d  (%d)\n", addr, (uint16_t)read_value);
+
+        k_sleep(K_MSEC(6000));
+    }
+}
+
+void main(void) {
+    // Call the appropriate function based on your application logic
+    write_eeprom();
+    //read_eeprom();
 }
