@@ -18,8 +18,8 @@
 
 static int received_data_len = 0;
 static uint8_t received_data[1024];
-static uint8_t tx_buf[SIZE];
-static uint8_t rx_buf[SIZE];
+
+
 
 static const struct device *const uart_dev = DEVICE_DT_GET(UART_DEVICE_NODE);
 
@@ -74,8 +74,9 @@ char *itoa(int num, char *buffer, int base)
 }
 
 // sends the command via uart
-void send_data(const char *at_command)
+void send_data(const char *at_command,uint8_t *tx_buf)
 {
+	
 	// Sends the data from the tx_buffer using uart_poll_out
 	snprintf(tx_buf, SIZE, "%s\r\n", at_command);
 	for (size_t i = 0; i < strlen(tx_buf); i++) {
@@ -85,13 +86,14 @@ void send_data(const char *at_command)
 // stores the command in a array
 void AT_SEND(const char *data)
 {
+	 uint8_t tx_buf[SIZE];
 	size_t len = strlen(data);
 	if (len >= SIZE) {
 		// Handle error: Input data is too large for the buffer
 		return;
 	}
 
-	send_data(data);
+	send_data(data,tx_buf);
 	for (size_t i = 0; i < SIZE; i++) {
 		tx_buf[i] = 0;
 	}
@@ -107,6 +109,8 @@ int status = ESTABLLISH_CONNECTION;
 
 static void uart_cb(const struct device *x, void *user_data)
 {
+	static uint8_t rx_buf[SIZE];
+
 	uart_irq_update(x);
 
 	if (uart_irq_rx_ready(x)) {
@@ -126,24 +130,43 @@ bool check_connection()
 	if (received_data_len > 0) {
 		printk("Received data: %s\n", received_data);
 	}
-	if (strstr(received_data, "OK") != NULL) {
+	if (strstr(received_data, "CONNECTED") != NULL || strstr(received_data, "CONNECTED") != NULL ) {
 		connection = true;
 	}
 
 	return connection;
 }
+
+void return_time()
+{
+
+const char *prefix = "current time: ";
+    char *time_ptr = strstr(received_data, prefix);
+
+    if (time_ptr) {
+        time_ptr += strlen(prefix); // Move the pointer past the prefix
+        char time[9]; // Assuming the time format is hh:mm:ss
+        strncpy(time, time_ptr, 8);
+        time[8] = '\0'; // Null-terminate the extracted time
+        printf("Extracted time: %s\n", time);
+    } else {
+        printf("Time not found in the text.\n");
+    }
+	
+}
 void WIFI_INIT()
 {
-	k_sleep(K_MSEC(6000));
-	printk("establishing wifi connection...");
+	k_sleep(K_MSEC(600));
+	printk("establishing wifi connection...\n");
 	AT_SEND("AT+CWJAP=\"i\",\"bqmi8806\"\r\n"); // insert wifi name && ssid
+	k_sleep(K_MSEC(3000));
 	if (check_connection() == true) {
 		printk("WiFi is connected.\n");
-		status = TCP_INIT;
+		status = ESTABLISH_TCP_IP;
 	}
 
 	else {
-		printk("Wifi connection failed");
+		printk("Wifi connection failed\n");
 		status = NO_CONNECTION;
 	}
 	k_sleep(K_MSEC(2000));
@@ -151,25 +174,19 @@ void WIFI_INIT()
 }
 void TCP_INIT()
 {
-	k_sleep(K_MSEC(3000));
+	printk("Conecting to database...\n");
+	k_sleep(K_MSEC(300));
 	AT_SEND("AT+CIPSTART=\"TCP\",\"192.168.61.157\",80\r\n"); // insert wifi name && ssid;//
-
 	k_sleep(K_MSEC(3000));
-
-	printk("TCP connection is established.\n");
-	status = SEND_DATABASE; // Change status to SEND_DATABASE
-
 	if (check_connection() == true) {
-		printk("can't connect to database.\n");
+		printk("connected to database.\n");
 		status = SEND_DATABASE;
 	} else {
 		printk("TCP connection failed.\n");
-	}
-	else
-	{
 
 		status = NO_CONNECTION;
 	}
+	
 }
 
 void SEND_INIT()
@@ -178,6 +195,7 @@ void SEND_INIT()
 	// converts integer to string
 	itoa(temperature, temperatureStr, 10);
 	itoa(humidity, humidityStr, 10);
+printk("Sending Data: %d.%d, %d.%d, and %d.%d\n", temperature, temperature_decimal, humidity, humidity_decimal, pressure, pressure_decimal);
 
 	// calculate CIPSEND size
 	content_length = strlen(humidityStr) + strlen(temperatureStr) + 72;
@@ -187,12 +205,13 @@ void SEND_INIT()
 	sprintf(string2,
 		"GET /file.php?temperature=%s&humidity=%s HTTP/1.1\r\nHost: localhost\r\n\r\n",
 		temperatureStr, humidityStr);
-	k_sleep(K_MSEC(3000));
+	k_sleep(K_MSEC(30));
 	AT_SEND(string);
-	k_sleep(K_MSEC(3000));
+	k_sleep(K_MSEC(300));
 	AT_SEND(string2);
-	k_sleep(K_MSEC(3000));
-
+	k_sleep(K_MSEC(4000));
+check_connection();
+return_time();
 	status = ESTABLISH_TCP_IP;
 }
 
@@ -202,7 +221,10 @@ void offline_init()
 	k_sleep(K_MSEC(3000));
 	// write sensor values to eeprom
 
-	// when wifi is connected change status to ESTABLISH CONNECTION
+
+	// after 1 minute check if internet is connected do this when measuring a new value this is when a value becomes high
+	// imaginary value goes high in if statement that yet has to be implemented
+	status = ESTABLLISH_CONNECTION;
 }
 
 void Database_init()
