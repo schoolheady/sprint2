@@ -3,12 +3,18 @@
 #include <zephyr/drivers/counter.h>
 #include <zephyr/drivers/uart.h>
 #include <time.h>
+#include <string.h>
 
-#define RTC_NODE DT_NODELABEL(rtc) // Adjust to your specific configuration
+#define RTC_NODE DT_NODELABEL(rtc) 
+// also add that when a new time is added the ticks need to be reset to 0
+
+
+// Adjust to your specific configuration
 // Set the initial time to 12:00:00 (12 o'clock)
 //use ntptime in current time to get the exact time precise
-int ntptime_in_seconds;
-time_t current_time = 12.9999 * 3600; // 12 hours in seconds
+
+time_t time_in_seconds=12.9999 * 3600;
+
 void main(void)
 {
     const struct device *rtc_dev = DEVICE_DT_GET(RTC_NODE);
@@ -29,10 +35,10 @@ void main(void)
     while (1) {
         uint32_t rtc_ticks;
         ret = counter_get_value(rtc_dev, &rtc_ticks);
-
+time_t current_time = (time_in_seconds)+rtc_ticks; // 12 hours in seconds
         if (ret == 0) {
             // Convert ticks to seconds
-			current_time=current_time+rtc_ticks;
+		
         struct tm *tm_info = localtime(&current_time);
 
         // Print the time in HH:MM:SS format
