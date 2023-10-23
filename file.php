@@ -38,7 +38,7 @@
     echo "Received humidity via GET: $humidity<br>";
     echo "Received time: $Time<br>";
 
-    $query = "INSERT INTO weerstation (temperature,pressure,humidity,Tijd) VALUES ('$temperature', '$pressure','$humidity','$Time')";
+    $query = "UPDATE weerstation SET temperature = '$temperature',pressure = '$pressure',humidity = '$humidity') WHERE Tijd = '$Time'";
 
     echo "Query: $query<br>";  // Debug output
     $Time = date("H:i:s");
