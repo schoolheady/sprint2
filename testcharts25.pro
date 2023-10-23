@@ -11,12 +11,14 @@ CONFIG += c++17
 SOURCES += \
     Charts.cpp \
     Database.cpp \
+    chartfunctions.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     Charts.h \
     Database.h \
+    chartfunctions.h \
     mainwindow.h
 
 FORMS += \

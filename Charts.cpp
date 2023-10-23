@@ -1,8 +1,6 @@
-#include <QChartView>
-#include <QPainter>
-#include <QLineSeries>
-#include <QChart>
+
 #include "Charts.h"
+
 
 
 // Deze functie doet niks ?????

@@ -1,9 +1,12 @@
 #ifndef CHARTS_H
 #define CHARTS_H
 
+#include <QPainter>
+#include <QChart>
 #include <QChartView>
 #include <QLineSeries>
 #include <memory>
+#include <QTime>
 
 class ChartsManager{
 public:
