@@ -1,18 +1,25 @@
 #include<stdio.h>
 #include<math.h>
 
-int main() {	
-    int num1 = 234;
-    int num2 = 334;
-
-    int Num2Length = 0;
-    int tempNum2 = num2;
-    while(tempNum2 != 0) {
-        tempNum2 /= 10;
-        Num2Length++;
+float IntToFloat(int num1, int num2, float Value){
+    int Length = 0;
+    int tempNum = num2;
+    while(tempNum != 0) {
+        tempNum /= 10;
+        Length++;
     }
+    Value = num1 + (float)num2 / pow(10, Length);
 
-    float result = num1 + (float)num2 / pow(10, Num2Length);	
-    printf("result : %.2f\n", result);
+    return Value;
+}
+
+int main() {	
+    int num1 = 99;
+    int num2 = 22;
+    float Value = 0;
+
+    Value = IntToFloat(num1,num2,Value);
+
+    printf("result : %.2f\n", Value);
 
 }
