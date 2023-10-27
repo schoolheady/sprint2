@@ -6,6 +6,7 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(Databasesql)
 
 target_sources(app PRIVATE
-    src/Database.c
+    src/Database_connect.c
     src/BME280.c
+    src/rtc.c
 )

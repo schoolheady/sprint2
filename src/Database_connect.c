@@ -11,7 +11,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include "BME280.h"
-
+#include "Database_connect.h"
+#include "rtc.h"
 /* change this to any other UART peripheral if desired */
 #define UART_DEVICE_NODE DT_NODELABEL(usart1) // 8 && 3
 #define SIZE             200
@@ -31,6 +32,9 @@ uint8_t pressure_decimal = 0;
 uint8_t humidity = 0;
 uint8_t humidity_decimal = 0;
 
+int uur = 0;
+int min = 0;
+int sec = 0;
 // Convert temperature and humidity to strings
 char temperatureStr[20];
 char humidityStr[20];
@@ -106,10 +110,10 @@ typedef enum {
 	NO_CONNECTION
 } Database;
 int status = ESTABLLISH_CONNECTION;
-
+	static uint8_t rx_buf[SIZE];
 static void uart_cb(const struct device *x, void *user_data)
 {
-	static uint8_t rx_buf[SIZE];
+
 
 	uart_irq_update(x);
 
@@ -128,31 +132,48 @@ bool check_connection()
 {
 	bool connection = false;
 	if (received_data_len > 0) {
-		printk("Received data: %s\n", received_data);
+		//printk("Received data: %s\n", received_data);
 	}
-	if (strstr(received_data, "CONNECTED") != NULL || strstr(received_data, "CONNECTED") != NULL ) {
+	if (strstr(received_data, "CONNECTED") != NULL || strstr(received_data, "OK") != NULL ) {
 		connection = true;
 	}
-
+	
+	
 	return connection;
 }
 
+
+int seperate(char *str, int pos)
+{
+    int result = 0;
+    str += pos;
+    while ((*str >= '0') && (*str <= '9'))
+  {
+      result = (result * 10) + ((*str) - '0');
+      str++;
+  }
+    return (result);
+}
 void return_time()
 {
 
 const char *prefix = "current time: ";
-    char *time_ptr = strstr(received_data, prefix);
+char *time_ptr = strstr(received_data, prefix);
 
-    if (time_ptr) {
-        time_ptr += strlen(prefix); // Move the pointer past the prefix
-        char time[9]; // Assuming the time format is hh:mm:ss
-        strncpy(time, time_ptr, 8);
-        time[8] = '\0'; // Null-terminate the extracted time
-        printf("Extracted time: %s\n", time);
-    } else {
-        printf("Time not found in the text.\n");
-    }
-	
+if (time_ptr != NULL) {
+    time_ptr += strlen(prefix); // Move the pointer past the prefix
+    char time[9]; // Assuming the time format is hh:mm:ss
+    strncpy(time, time_ptr, 8);
+    time[8] = '\0'; // Null-terminate the extracted time
+    printk("Time without: %s\n", time);
+
+    uur = seperate(time, 0);
+    min = seperate(time, 3);
+    sec = seperate(time, 6);
+    printk("uur: %d\nmin: %d\nsec: %d\n", uur, min, sec);
+} else {
+    printk("Prefix not found in received_data.\n");
+}
 }
 void WIFI_INIT()
 {
@@ -240,13 +261,17 @@ void Database_init()
 
 	case SEND_DATABASE:
 		SEND_INIT();
+		  k_sleep(K_SECONDS(40));
 		break;
 	case NO_CONNECTION:
 		offline_init();
+		
 		break;
 	default:
 		printk("Unknown WiFi status\n");
 	}
+	 memset(received_data, 0, sizeof(received_data));
+    received_data_len = 0;
 }
 
 void main(void)
@@ -257,5 +282,7 @@ void main(void)
 	while (1) {
 
 		Database_init();
+		run_rtc(uur,min,sec);
+	   
 	}
 }

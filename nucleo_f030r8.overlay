@@ -13,3 +13,14 @@
         reg = <0x76>;  // I2C address of BME280
     };
 };
+
+    &rtc {
+        status = "okay";
+    clocks = < &rcc 0x1c 0x10000000 >, < &rcc STM32_SRC_LSE RTC_SEL(1) >;
+    };
+
+&clk_lse {
+    status="okay";
+    driving-capability = < 0x3 >;
+    /delete-property/ lse-bypass;
+};
