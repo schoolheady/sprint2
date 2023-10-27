@@ -1,0 +1,17 @@
+
+
+int main() {	
+    int num1 = 234;
+    int num2 = 334;
+
+    int Num2Length = 0;
+    int tempNum2 = num2;
+    while(tempNum2 != 0) {
+        tempNum2 /= 10;
+        Num2Length++;
+    }
+
+    float result = num1 + (float)num2 / pow(10, Num2Length);	
+    printf("result : %.2f\n", result);
+
+}
