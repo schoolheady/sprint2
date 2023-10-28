@@ -28,14 +28,14 @@ static const struct device *get_bme280_device(void)
 	if (dev == NULL) {
 		/* No such node, or the node does not have status "okay". */
 		printk("\nError: no device found.\n");
-		return NULL;
+		
 	}
 
 	if (!device_is_ready(dev)) {
 		printk("\nError: Device \"%s\" is not ready; "
 		       "check the driver initialization logs for errors.\n",
 		       dev->name);
-		return NULL;
+	
 	}
 else{
 	printk("Found device \"%s\", getting sensor data\n", dev->name);

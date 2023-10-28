@@ -21,6 +21,7 @@ int index = 0;
    int pres=0;
    int hum= 0;
    int seconde=0;
+   int readtime=0;
  
 int testarr[4];
 const struct device *const dev = DEVICE_DT_GET(NODE_EP1);
@@ -72,19 +73,18 @@ while(status==false){
         // Move to the next EEPROM address for the next value
         addr += sizeof(int);
 
-        k_sleep(K_MSEC(100));
+       
     }
     }
 }
-
 
 // check eeprom is not empty;
 // send data from eeprom to database
 // modifies the variable that enters to the value stored in the eeprom
 int address=0;
-int send_eepromval(int* temp, int* hum, int* press, int* sec)
+int send_eepromval(int* temp, int* hum, int* press)
 {
-    int values[4]={*temp,*hum,*press,*sec};
+    int values[4]={*temp,*hum,*press,readtime};
     int null[4]={0,0,0,0};
 for (int i = 0; i < 4; i++) {
     int read_value;
@@ -101,7 +101,7 @@ for (int i = 0; i < 4; i++) {
     *temp = values[0];
     *hum = values[1];
     *press = values[2];
-    *sec = values[3];
+    readtime = values[3];
 
 return address;
 }
@@ -122,7 +122,7 @@ ret = eeprom_read(dev, address, (int*)&read_value, sizeof(int));
 eeprom_val=+read_value;
 
     }
-    
+
     printk("value: %d",eeprom_val);
 if(eeprom_val == 0){
 return true;

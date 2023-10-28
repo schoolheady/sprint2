@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "rtc.h"
-
+#include "offline_storage.h"
 #define RTC_NODE DT_NODELABEL(rtc) 
 // also add that when a new time is added the ticks need to be reset to 0
 
@@ -77,10 +77,47 @@ void run_rtc(int uur, int min, int sec)
 
 
 }
+void rtcTimeconv(int rtcValue, int *prtcuur,int *prtcmin,int *prtcsec)
+{
+    int temp = 0;
+    *prtcuur = rtcValue / 3600;
+    temp = *prtcuur * 3600;
+    //printf("Uur in sec:%d\n", temp);
+    rtcValue -= temp;
+    *prtcmin = rtcValue / 60;
+    temp = *prtcmin * 60;
+    //printf("Min in sec:%d\n", temp);
+    rtcValue -= temp;
+    *prtcsec = rtcValue;
+}
 char time_string[10]; 
-char* getTimeString() {
+char* getTimeString()
+{
+  int rtcuur=0;
+  int rtcminuut=0;
+  int rtcseconde=0;
+
+  int uur=tm_info->tm_hour;
+  int minuut=tm_info->tm_min;
+  int seconde=tm_info->tm_sec;
   
-    sprintf(time_string, "%02d:%02d:%02d", tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec);
+ if(eeprom_empty()!= true)
+{
+
+    printk("uur:%d minuut:%d seconde:%d",uur,minuut,seconde);
+    rtcTimeconv(readtime, &rtcuur,&rtcminuut,&rtcseconde);
     
+    uur+=rtcuur;
+    minuut+=rtcminuut;
+    seconde+=rtcseconde;
+
+     sprintf(time_string, "%02d:%02d:%02d", uur, minuut, seconde);
+}
+    else
+    {
+    sprintf(time_string, "%02d:%02d:%02d", tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec);
+    }
+   
+   
     return time_string;
 }

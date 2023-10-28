@@ -201,6 +201,7 @@ void WIFI_INIT()
 	else {
 		printk("Wifi connection failed\n");
 		status = NO_CONNECTION;
+
 	}
 	k_sleep(K_MSEC(2000));
 	// add if wifi is connected status == ESTABLISH_TCP_IP
@@ -217,19 +218,28 @@ void TCP_INIT()
 		database_connection=true;
 	} else {
 		printk("TCP connection failed.\n");
-
+        database_connection=false;
 		status = NO_CONNECTION;
 	}
 	
 }
-
+ char *Time;
 void SEND_INIT()
 {
-if(eeprom_empty() != false){
+if(eeprom_empty() == true){
 	printk("eeprom is empty\n\n\n");
  temperature = temp_val;
  pressure = press_val;
  humidity = hum_val;
+ Time=time_sensor;
+ status = ESTABLISH_TCP_IP;
+}
+else
+{
+	Time=getTimeString();
+database_connection=true;
+status= NO_CONNECTION;
+
 }
 
 	// converts integer to string
@@ -246,7 +256,7 @@ content_length = strlen(humidityStr) + strlen(temperatureStr) + strlen(pressureS
 	sprintf(string, "AT+CIPSEND=%s\r\n", content_lengthSTR);
 	sprintf(string2,
 		"GET /file.php?temperature=%s&humidity=%s&pressure=%s&Time=%s HTTP/1.1\r\nHost: localhost\r\n\r\n",
-		temperatureStr, humidityStr,pressureStr,time_sensor);
+		temperatureStr, humidityStr,pressureStr,Time);
 	k_sleep(K_MSEC(30));
 	AT_SEND(string);
 	k_sleep(K_MSEC(300));
@@ -255,20 +265,22 @@ content_length = strlen(humidityStr) + strlen(temperatureStr) + strlen(pressureS
 	k_sleep(K_MSEC(4000));
 check_connection();
 return_time();
-	status = ESTABLISH_TCP_IP;
+
+	
 }
 
 void offline_init()
 {
-	printk("offline_init");
-	k_sleep(K_MSEC(3000));
+	printk("offline_init\n");
+	
+	
+printk("database = %d",database_connection);
 
 	// write sensor values to eeprom while no connection to database
 write_eeprom(database_connection);
 send_eepromval(&temperature, &humidity, &pressure, &sec);
  // happens when there is connection to a database
  //send_eepromval(temperature, pressure ,humidity,0, int current_address);
-
 
 
 	status = ESTABLISH_TCP_IP;
@@ -306,12 +318,8 @@ void main(void)
 	uart_irq_rx_enable(uart_dev);
 	while (1) {
 	    BME280();
-		Database_init();
 		run_rtc(uur,min,sec);
-	
-		
-
-
+		Database_init();
 
 	   
 	}
