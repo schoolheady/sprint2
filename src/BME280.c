@@ -28,17 +28,16 @@ static const struct device *get_bme280_device(void)
 	if (dev == NULL) {
 		/* No such node, or the node does not have status "okay". */
 		printk("\nError: no device found.\n");
-		
+		return NULL;
 	}
 
 	if (!device_is_ready(dev)) {
-		printk("\nError: Device \"%s\" is not ready; "
-		       "check the driver initialization logs for errors.\n",
+		printk("\n\n\n Restart device or check the \"%s\"  pin connections\n\n\n",
 		       dev->name);
-	
+		return NULL;
 	}
 else{
-	printk("Found device \"%s\", getting sensor data\n", dev->name);
+	//printk("Found device \"%s\", getting sensor data\n", dev->name);
 }
 	return dev;
 }
@@ -59,7 +58,7 @@ void cijfersachter(int num, int *pa)
 	*pa = DoublleIntToInt(*pa, num);
 }
 
-int BME280()
+void BME280()
 {
 	const struct device *dev = get_bme280_device();
 	if (dev == NULL) {
@@ -86,7 +85,5 @@ int BME280()
 	cijfersachter(store_temp, &press_val);
 	time_sensor = getTimeString();
 
-printk("this is the rtc: %d\n\n",count);
-	return count;
 		
 }

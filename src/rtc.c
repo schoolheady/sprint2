@@ -20,11 +20,11 @@ int store=0;
      int count = 0;
 
      struct tm *tm_info;
-
+     time_t current_time;
 void run_rtc(int uur, int min, int sec)
 {
-    printk("sec: %d\n",last_sec);
-    printk("sec nieuw: %d\n",sec);
+    //printk("uur: %d\n",uur);
+    //printk("sec nieuw: %d\n",sec);
     last_uur=last_uur;
     last_min=last_min;
     last_sec=last_sec;
@@ -37,7 +37,7 @@ void run_rtc(int uur, int min, int sec)
         return;
     }
 
-    printk("RTC device found\n");
+  //  printk("RTC device found\n");
 
     uint32_t rtc_ticks;
     int ret = counter_get_value(rtc_dev, &rtc_ticks);
@@ -46,14 +46,15 @@ void run_rtc(int uur, int min, int sec)
     // Check if uur, min, and sec have changed or are all zeros
     if ((uur == 0 && min == 0 && sec == 0) ||last_sec-sec != 0 ) {
         // Reset the count and store the original rtc_ticks value'
-        printk("reset");
+       // printk("reset");
         store=rtc_ticks-1;
         count = 0;
         
     }
     else
     {
-       count=store;
+
+        count=store;
         count=rtc_ticks-count;
     }
 
@@ -61,8 +62,8 @@ void run_rtc(int uur, int min, int sec)
     last_min = min;
     last_sec = sec;
 
-    printk("%d\n", count);
-  time_t current_time = (time_in_seconds) + count;
+    
+  current_time = (time_in_seconds) + count;
     if (ret == 0) {
         // Convert ticks to seconds
         tm_info = localtime(&current_time);
@@ -97,21 +98,25 @@ char* getTimeString()
   int rtcminuut=0;
   int rtcseconde=0;
 
-  int uur=tm_info->tm_hour;
-  int minuut=tm_info->tm_min;
-  int seconde=tm_info->tm_sec;
+  int uur2;
+  int minuut2;
+  int seconde2;
   
  if(eeprom_empty()!= true)
 {
+    uur2=tm_info->tm_hour;
+  minuut2=tm_info->tm_min;
+   seconde2=tm_info->tm_sec;
+  
 
-    printk("uur:%d minuut:%d seconde:%d",uur,minuut,seconde);
+    printk("uur:%d minuut:%d seconde:%d\n",uur2,minuut2,seconde2);
     rtcTimeconv(readtime, &rtcuur,&rtcminuut,&rtcseconde);
     
-    uur+=rtcuur;
-    minuut+=rtcminuut;
-    seconde+=rtcseconde;
+    uur2+=rtcuur;
+    minuut2+=rtcminuut;
+    seconde2+=rtcseconde;
 
-     sprintf(time_string, "%02d:%02d:%02d", uur, minuut, seconde);
+     sprintf(time_string, "%02d:%02d:%02d", uur2, minuut2, seconde2);
 }
     else
     {
@@ -120,4 +125,24 @@ char* getTimeString()
    
    
     return time_string;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

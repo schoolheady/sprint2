@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-int BME280();
+void BME280();
 extern int temp_val;
 extern int press_val;
 extern int hum_val;

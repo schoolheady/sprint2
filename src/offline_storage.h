@@ -11,9 +11,8 @@
 
 
 int send_eepromval(int* temp, int* hum, int* press, int* sec);
-void write_eeprom(bool status);
+void write_eeprom();
 bool eeprom_empty();
-
+extern bool check_eeprom_write;
 extern int readtime;
-
 #endif

@@ -22,7 +22,6 @@ static int received_data_len = 0;
 static uint8_t received_data[1024];
 
 
-
 static const struct device *const uart_dev = DEVICE_DT_GET(UART_DEVICE_NODE);
 
 // temperature and humidity values will be stored in here
@@ -171,31 +170,33 @@ void return_time()
 {
 
 const char *prefix = "current time: ";
-char *time_ptr = strstr(received_data, prefix);
+char *time_ptr = strstr(received_data, "current time: ");
 
 if (time_ptr != NULL) {
     time_ptr += strlen(prefix); // Move the pointer past the prefix
     char time[9]; // Assuming the time format is hh:mm:ss
     strncpy(time, time_ptr, 8);
     time[8] = '\0'; // Null-terminate the extracted time
-    printk("Time without: %s\n", time);
+   printk("Time without: %s\n", time);
 
     uur = seperate(time, 0);
     min = seperate(time, 3);
     sec = seperate(time, 6);
-    printk("uur: %d\nmin: %d\nsec: %d\n", uur, min, sec);
+    
 } else {
     printk("Prefix not found in received_data.\n");
 }
 }
 void WIFI_INIT()
 {
+
 	k_sleep(K_MSEC(600));
 	printk("establishing wifi connection...\n");
 	AT_SEND("AT+CWJAP=\"i\",\"bqmi8806\"\r\n"); // insert wifi name && ssid
 	if (check_connection() == true) {
 		printk("WiFi is connected.\n");
 		status = ESTABLISH_TCP_IP;
+		database_connection=true;
 	}
 
 	else {
@@ -204,14 +205,14 @@ void WIFI_INIT()
 
 	}
 	k_sleep(K_MSEC(2000));
-	// add if wifi is connected status == ESTABLISH_TCP_IP
+
 }
+ char *Time;
+ char *check="00:00:00";
 void TCP_INIT()
 {
 	printk("Conecting to database...\n");
-	k_sleep(K_MSEC(300));
-	AT_SEND("AT+CIPSTART=\"TCP\",\"192.168.74.157\",80\r\n"); // insert wifi name && ssid;//
-
+	AT_SEND("AT+CIPSTART=\"TCP\",\"192.168.248.97\",80\r\n"); // insert wifi name && ssid;//
 	if (check_connection() == true) {
 		printk("connected to database.\n");
 		status = SEND_DATABASE;
@@ -223,19 +224,23 @@ void TCP_INIT()
 	}
 	
 }
- char *Time;
+
 void SEND_INIT()
 {
 if(eeprom_empty() == true){
-	printk("eeprom is empty\n\n\n");
  temperature = temp_val;
  pressure = press_val;
  humidity = hum_val;
  Time=time_sensor;
+	printk("sending data directly\n\n\n");
+	 if((strcmp(Time, check) != 0) ){
+ k_sleep(K_SECONDS(30));
+ }
  status = ESTABLISH_TCP_IP;
 }
 else
 {
+	printk("sending data from eeprom\n\n\n");
 	Time=getTimeString();
 database_connection=true;
 status= NO_CONNECTION;
@@ -247,7 +252,7 @@ status= NO_CONNECTION;
 	itoa(humidity, humidityStr, 10);
 	itoa(pressure, pressureStr, 10);
 	
-printk("Sending Data: %d, %d, and %d\n", temperature, humidity, pressure);
+printk("Sending Data: %d, %d, and %d, time :%s\n", temperature, humidity, pressure,Time);
 
 	// calculate CIPSEND size
 content_length = strlen(humidityStr) + strlen(temperatureStr) + strlen(pressureStr)+8+86;
@@ -257,14 +262,19 @@ content_length = strlen(humidityStr) + strlen(temperatureStr) + strlen(pressureS
 	sprintf(string2,
 		"GET /file.php?temperature=%s&humidity=%s&pressure=%s&Time=%s HTTP/1.1\r\nHost: localhost\r\n\r\n",
 		temperatureStr, humidityStr,pressureStr,Time);
-	k_sleep(K_MSEC(30));
+	k_sleep(K_MSEC(1000));
 	AT_SEND(string);
-	k_sleep(K_MSEC(300));
+	k_sleep(K_MSEC(2000));
+ check_connection();
 	AT_SEND(string2);
+	k_sleep(K_MSEC(1000));
+	check_connection();
+	if(eeprom_empty() == true){return_time();}
 	printk("%s",string2);
-	k_sleep(K_MSEC(4000));
-check_connection();
-return_time();
+	
+
+
+
 
 	
 }
@@ -274,21 +284,21 @@ void offline_init()
 	printk("offline_init\n");
 	
 	
-printk("database = %d",database_connection);
+printk("database status = %d",database_connection);
 
 	// write sensor values to eeprom while no connection to database
-write_eeprom(database_connection);
+write_eeprom();
+
+//sending data if eeprom is not empty
 send_eepromval(&temperature, &humidity, &pressure, &sec);
- // happens when there is connection to a database
- //send_eepromval(temperature, pressure ,humidity,0, int current_address);
-
-
-	status = ESTABLISH_TCP_IP;
+	status = SEND_DATABASE; // after entering the while loop it needs to send the data to the database
 }
 
 void Database_init()
 {
-    // Reset received data
+	int uart1_data = 3;
+	uart_irq_callback_user_data_set(uart_dev, uart_cb, &uart1_data);
+	uart_irq_rx_enable(uart_dev);
     received_data_len = 0;
     memset(received_data, 0, sizeof(received_data));
 
@@ -311,16 +321,4 @@ void Database_init()
 }
 
 
-void main(void)
-{
-	int uart1_data = 3;
-	uart_irq_callback_user_data_set(uart_dev, uart_cb, &uart1_data);
-	uart_irq_rx_enable(uart_dev);
-	while (1) {
-	    BME280();
-		run_rtc(uur,min,sec);
-		Database_init();
 
-	   
-	}
-}
